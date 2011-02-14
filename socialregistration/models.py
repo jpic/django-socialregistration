@@ -8,7 +8,7 @@ class FacebookProfile(models.Model):
     user = models.ForeignKey(User)
     site = models.ForeignKey(Site, default=Site.objects.get_current)
     uid = models.CharField(max_length=255, blank=False, null=False)
-
+    access_token = models.TextField(help_text='only useful if your app has offline_access permission', null=True, blank=True)
     def __unicode__(self):
         if self.pk:
             user = self.user

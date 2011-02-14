@@ -111,9 +111,13 @@ def facebook_login(request, template='socialregistration/facebook.html',
 
     if user is None:
         request.session['socialregistration_user'] = User()
-        request.session['socialregistration_profile'] = FacebookProfile(uid=request.facebook.uid)
+        request.session['socialregistration_profile'] = FacebookProfile(uid=request.facebook.uid, access_token=request.facebook.access_token)
         request.session['next'] = _get_next(request)
         return HttpResponseRedirect(reverse('socialregistration_setup'))
+    else:
+        profile = FacebookProfile.objects.get(uid=request.facebook.uid)
+        profile.access_token = request.facebook.access_token
+        profile.save()
 
     if not user.is_active:
         return render_to_response(account_inactive_template, extra_context,
@@ -138,6 +142,8 @@ def facebook_connect(request, template='socialregistration/facebook.html',
     except FacebookProfile.DoesNotExist:
         profile = FacebookProfile.objects.create(user=request.user,
             uid=request.facebook.uid)
+    profile.access_token = request.facebook.access_token
+    profile.save()
 
     return HttpResponseRedirect(_get_next(request))
 
