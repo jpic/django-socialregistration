@@ -19,7 +19,7 @@ from django.contrib.sites.models import Site
 
 from socialregistration.forms import UserForm
 from socialregistration.utils import (OAuthClient, OAuthTwitter,
-    OpenID, _https, DiscoveryFailure)
+    OpenID, _https, DiscoveryFailure, get_token_prefix)
 from socialregistration.models import FacebookProfile, TwitterProfile, OpenIDProfile
 
 
@@ -180,6 +180,10 @@ def twitter(request, account_inactive_template='socialregistration/account_inact
             profile = TwitterProfile.objects.get(twitter_id=user_info['id'])
         except TwitterProfile.DoesNotExist: # There can only be one profile!
             profile = TwitterProfile.objects.create(user=request.user, twitter_id=user_info['id'])
+        profile.access_token = client._get_at_from_session()['oauth_token']
+        profile.token_secret = client._get_at_from_session()['oauth_token_secret']
+        profile.nick = client._get_at_from_session()['screen_name']
+        profile.save()
 
         return HttpResponseRedirect(_get_next(request))
 
@@ -187,11 +191,20 @@ def twitter(request, account_inactive_template='socialregistration/account_inact
 
     if user is None:
         profile = TwitterProfile(twitter_id=user_info['id'])
+        profile.access_token = client._get_at_from_session()['oauth_token']
+        profile.token_secret = client._get_at_from_session()['oauth_token_secret']
+        profile.nick = client._get_at_from_session()['screen_name']
         user = User()
         request.session['socialregistration_profile'] = profile
         request.session['socialregistration_user'] = user
         request.session['next'] = _get_next(request)
         return HttpResponseRedirect(reverse('socialregistration_setup'))
+    else:
+        profile = user.twitterprofile_set.get(twitter_id=user_info['id'])
+        profile.access_token = client._get_at_from_session()['oauth_token']
+        profile.token_secret = client._get_at_from_session()['oauth_token_secret']
+        profile.nick = client._get_at_from_session()['screen_name']
+        profile.save()
 
     if not user.is_active:
         return render_to_response(
