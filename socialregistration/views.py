@@ -180,10 +180,12 @@ def twitter(request, account_inactive_template='socialregistration/account_inact
             profile = TwitterProfile.objects.get(twitter_id=user_info['id'])
         except TwitterProfile.DoesNotExist: # There can only be one profile!
             profile = TwitterProfile(user=request.user, twitter_id=user_info['id'])
-            profile.access_token = client._get_at_from_session()['oauth_token']
-            profile.token_secret = client._get_at_from_session()['oauth_token_secret']
-            profile.nick = client._get_at_from_session()['screen_name']
-            profile.save()
+
+        profile.access_token = client._get_at_from_session()['oauth_token']
+        profile.token_secret = client._get_at_from_session()['oauth_token_secret']
+        profile.nick = client._get_at_from_session()['screen_name']
+        print profile, profile.access_token, profile.token_secret, profile.nick
+        profile.save()
 
         return HttpResponseRedirect(_get_next(request))
 
@@ -199,6 +201,13 @@ def twitter(request, account_inactive_template='socialregistration/account_inact
         request.session['socialregistration_user'] = user
         request.session['next'] = _get_next(request)
         return HttpResponseRedirect(reverse('socialregistration_setup'))
+    else:
+        profile = TwitterProfile.objects.get(user=user, twitter_id=user_info['id'])
+        profile.access_token = client._get_at_from_session()['oauth_token']
+        profile.token_secret = client._get_at_from_session()['oauth_token_secret']
+        profile.nick = client._get_at_from_session()['screen_name']
+        profile.save()
+
 
     if not user.is_active:
         return render_to_response(
